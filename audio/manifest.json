@@ -1,0 +1,84 @@
+{
+  "loops": {
+    "lake-lap": {
+      "file": "lake-lap.mp3",
+      "seconds": 37.85,
+      "channels": 2,
+      "lufs": -24.1
+    },
+    "lake-air": {
+      "file": "lake-air.mp3",
+      "seconds": 60.03,
+      "channels": 2,
+      "lufs": -23.4
+    },
+    "lake-night": {
+      "file": "lake-night.mp3",
+      "seconds": 44.64,
+      "channels": 2,
+      "lufs": -23.5
+    },
+    "rain-steady": {
+      "file": "rain-steady.mp3",
+      "seconds": 55.04,
+      "channels": 1,
+      "lufs": -23.4
+    },
+    "rain-patter": {
+      "file": "rain-patter.mp3",
+      "seconds": 60.03,
+      "channels": 2,
+      "lufs": -24.6
+    },
+    "fire-crackle": {
+      "file": "fire-crackle.mp3",
+      "seconds": 50.05,
+      "channels": 2,
+      "lufs": -32.9
+    },
+    "fire-sea": {
+      "file": "fire-sea.mp3",
+      "seconds": 60.03,
+      "channels": 2,
+      "lufs": -24.7
+    },
+    "fire-wind": {
+      "file": "fire-wind.mp3",
+      "seconds": 58.04,
+      "channels": 2,
+      "lufs": -23.5
+    },
+    "gallery-air": {
+      "file": "gallery-air.mp3",
+      "seconds": 66.85,
+      "channels": 1,
+      "lufs": -23.5
+    }
+  },
+  "piano": {
+    "A1": "piano-A1.mp3",
+    "C2": "piano-C2.mp3",
+    "Ds2": "piano-Ds2.mp3",
+    "Fs2": "piano-Fs2.mp3",
+    "C3": "piano-C3.mp3",
+    "Ds3": "piano-Ds3.mp3",
+    "Fs3": "piano-Fs3.mp3",
+    "A3": "piano-A3.mp3",
+    "C4": "piano-C4.mp3",
+    "Ds4": "piano-Ds4.mp3",
+    "Fs4": "piano-Fs4.mp3",
+    "A4": "piano-A4.mp3",
+    "C5": "piano-C5.mp3",
+    "Fs5": "piano-Fs5.mp3",
+    "C6": "piano-C6.mp3",
+    "C7": "piano-C7.mp3"
+  },
+  "music": [],
+  "sfx": {
+    "water": {
+      "file": "water.mp3",
+      "seconds": 16,
+      "channels": 1
+    }
+  }
+}

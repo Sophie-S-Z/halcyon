@@ -1,0 +1,356 @@
+<title>Halcyon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap">
+<style>
+/* Layout: one full-bleed canvas. The threshold, the title, and the three controls float above it. */
+:root {
+  --ink: #1A1410;
+  --umber: #3B2A20;
+  --bark: #6B4E3D;
+  --clay: #B9805F;
+  --peach: #D9A383;
+  --gold: #C9A35B;
+  --paper: #EFE3CF;
+  --tide: #5E7F80;
+  --paper-80: rgba(239, 227, 207, 0.8);
+  --paper-40: rgba(239, 227, 207, 0.4);
+  --paper-15: rgba(239, 227, 207, 0.15);
+  --serif: "Cormorant Garamond", "Cormorant", "EB Garamond", Georgia, "Times New Roman", serif;
+  --ease: cubic-bezier(0.45, 0, 0.25, 1);
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--ink);
+  color: var(--paper-80);
+  font-family: var(--serif);
+  font-weight: 300;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#stage { position: fixed; inset: 0; }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+
+/* ---------- threshold ---------- */
+#threshold {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 44px;
+  background: var(--ink);
+  touch-action: none; cursor: default; outline: none;
+}
+#threshold.open { background: transparent; pointer-events: none; }
+#threshold:focus-visible .word { color: var(--paper-80); }
+.light { position: relative; width: 120px; height: 120px; display: grid; place-items: center; will-change: transform; }
+.light .swell { position: absolute; inset: 0; display: grid; place-items: center; animation: swell 10s ease-in-out infinite; }
+.light .halo {
+  position: absolute; width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 163, 91, 0.55) 0%, rgba(201, 163, 91, 0.18) 38%, rgba(201, 163, 91, 0) 70%);
+  will-change: transform, opacity;
+}
+.light .core {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #EFD9A8;
+  box-shadow: 0 0 24px 8px rgba(201, 163, 91, 0.6);
+  will-change: transform, opacity;
+}
+@keyframes swell { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+#threshold .word {
+  font-size: 22px; letter-spacing: 0.12em; color: var(--paper-40);
+  transition: color 2s var(--ease);
+}
+
+/* ---------- rest light (timer end, sleep fade) ---------- */
+#restlight {
+  position: fixed; left: 50%; top: 50%; z-index: 15; translate: -50% -50%;
+  opacity: 0; pointer-events: none; transition: opacity 4s var(--ease);
+}
+#restlight.on { opacity: 1; }
+
+/* ---------- scene title ---------- */
+#title {
+  position: fixed; left: 0; right: 0; top: 26%; z-index: 10;
+  text-align: center; pointer-events: none;
+  font-size: clamp(22px, 2.6vw, 32px); letter-spacing: 0.12em;
+  color: var(--paper-80);
+  text-shadow: 0 0 18px rgba(26, 20, 16, 0.55), 0 0 2px rgba(26, 20, 16, 0.4);
+  opacity: 0;
+}
+#title.night { color: var(--gold); }
+
+/* ---------- hold cue on the shore ---------- */
+#holdcue {
+  position: fixed; z-index: 9; width: 90px; height: 90px; margin: -45px 0 0 -45px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(240, 201, 122, 0.55) 0%, rgba(201, 163, 91, 0) 65%);
+  opacity: 0; transform: scale(0.2); pointer-events: none;
+}
+
+/* ---------- controls ---------- */
+#controls {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 12;
+  padding: 0 16px calc(22px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.6s var(--ease), visibility 0s linear 0.6s;
+  pointer-events: none;
+}
+#controls.show { opacity: 1; visibility: visible; transition: opacity 0.6s var(--ease), visibility 0s; }
+#controls > * { pointer-events: auto; }
+.icons { display: flex; gap: 28px; opacity: 0.7; }
+.icon {
+  width: 44px; height: 44px; display: grid; place-items: center;
+  background: none; border: 0; padding: 0; border-radius: 50%; color: var(--paper); cursor: pointer;
+  transition: background-color 0.6s var(--ease);
+}
+.icon svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+.icon:hover, .icon[aria-expanded="true"] { background: var(--paper-15); }
+.icon:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+
+#arc { width: min(520px, 100%); }
+#arc svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: none; cursor: pointer; }
+#arc .track { fill: none; stroke: var(--paper-40); stroke-width: 1; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+#arc .hit { fill: none; stroke: transparent; stroke-width: 40; }
+#arc .end { fill: none; stroke: var(--paper-40); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#arc .dot { fill: var(--gold); }
+#arc .dotglow { fill: rgba(201, 163, 91, 0.25); }
+#arc svg:focus-visible { outline: none; }
+#arc svg:focus-visible .dotglow { fill: rgba(201, 163, 91, 0.5); }
+
+#panel {
+  width: min(340px, 100%); box-sizing: border-box;
+  padding: 18px 20px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 50%), rgba(26, 20, 16, 0.58);
+  -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 12px 36px rgba(10, 8, 6, 0.3);
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px 18px;
+  font-size: 17px; letter-spacing: 0.1em; color: var(--paper-80);
+}
+#panel .lab { color: var(--paper-40); }
+#panel .seg { display: flex; gap: 2px; justify-content: flex-end; }
+#panel button {
+  font: inherit; letter-spacing: 0.06em; color: var(--paper-80);
+  background: none; border: 1px solid transparent; border-radius: 14px;
+  padding: 2px 8px; cursor: pointer; font-variant-numeric: tabular-nums;
+}
+#panel button[aria-pressed="true"] { border-color: var(--gold); color: var(--paper); }
+#panel button:focus-visible { outline: 1px solid var(--gold); outline-offset: 1px; }
+#panel .sw { justify-self: end; }
+#credits { grid-column: 1 / -1; font-size: 13px; line-height: 1.5; letter-spacing: 0.04em; color: var(--paper-40); }
+
+/* ---------- timer: a small liquid-glass countdown while a timer runs ---------- */
+#timerglass {
+  position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); z-index: 11; translate: -50% 0;
+  display: flex; align-items: center; gap: 10px; padding: 7px 16px 7px 9px; border-radius: 999px;
+  font: inherit; font-size: 17px; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; color: var(--paper);
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05) 55%, rgba(255, 255, 255, 0.1)), rgba(26, 20, 16, 0.16);
+  -webkit-backdrop-filter: blur(16px) saturate(175%) brightness(1.06); backdrop-filter: blur(16px) saturate(175%) brightness(1.06);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 -1px 1px rgba(0, 0, 0, 0.12), 0 10px 30px rgba(10, 8, 6, 0.28);
+  text-shadow: 0 1px 6px rgba(26, 20, 16, 0.45);
+  cursor: pointer; overflow: hidden; isolation: isolate;
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+  transition: opacity 1.2s var(--ease), transform 1.2s var(--ease), visibility 0s linear 1.2s;
+}
+#timerglass::before {                       /* the bright rim light across the top of the glass */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background: radial-gradient(120% 90% at 22% -20%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 55%);
+}
+#timerglass.on { opacity: 0.88; visibility: visible; transform: none; transition: opacity 1.2s var(--ease), transform 1.2s var(--ease), visibility 0s; }
+#timerglass.on:hover { opacity: 1; }
+#timerglass:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+#timerglass svg { width: 22px; height: 22px; display: block; rotate: -90deg; }
+#timerglass .tr { fill: none; stroke: rgba(239, 227, 207, 0.25); stroke-width: 2; }
+#timerglass .tp { fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+@media (prefers-reduced-motion: reduce) { #timerglass, #timerglass .tp { transition: none; } }
+#volume { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; cursor: pointer; }
+#volume::-webkit-slider-runnable-track { height: 1px; background: var(--paper-40); }
+#volume::-moz-range-track { height: 1px; background: var(--paper-40); }
+#volume::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; margin-top: -5px; border-radius: 50%; background: var(--gold); border: 0; }
+#volume::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); border: 0; }
+#volume:focus-visible { outline: 1px solid var(--gold); outline-offset: 4px; }
+
+#loading {
+  position: fixed; left: 0; right: 0; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 21;
+  text-align: center; font-size: 15px; letter-spacing: 0.12em; color: var(--paper-40);
+  transition: opacity 2s var(--ease);
+}
+#loading.gone { opacity: 0; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .light .swell { animation-duration: 14s; }
+}
+
+/* ---------- gallery: windows adrift in a dark abyss ---------- */
+/* main.js moves each window (transform only) in one frame loop; CSS keeps the slow life inside each window. */
+#gallery {
+  position: fixed; inset: 0; z-index: 8; overflow: hidden;
+  background: radial-gradient(130% 95% at 50% 46%, #211913 0%, var(--ink) 40%, #0e0b08 100%);
+  touch-action: manipulation; cursor: default;
+  perspective: 1000px; perspective-origin: 50% 50%;   /* keep in step with GAL_P in main.js */
+  opacity: 0; transition: opacity 1.2s var(--ease);
+}
+#gallery.on { opacity: 1; }
+#gallery .haze {
+  position: absolute; left: 50%; top: 50%; width: 110vmax; height: 110vmax; margin: -55vmax 0 0 -55vmax; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(201, 163, 91, 0.055), rgba(201, 163, 91, 0));
+  animation: haze 74s ease-in-out infinite alternate; pointer-events: none; will-change: transform;
+}
+#gallery .haze.b { background: radial-gradient(closest-side, rgba(94, 127, 128, 0.05), rgba(94, 127, 128, 0)); animation-duration: 97s; animation-direction: alternate-reverse; }
+@keyframes haze { from { transform: translate3d(-16vmax, -9vmax, 0) scale(0.85); } to { transform: translate3d(15vmax, 11vmax, 0) scale(1.1); } }
+#deep { position: absolute; inset: 0; pointer-events: none; }
+.mote {
+  position: absolute; left: 0; top: 0; width: var(--s); height: var(--s); border-radius: 50%;
+  background: radial-gradient(circle, rgba(239, 217, 168, 0.95), rgba(239, 217, 168, 0) 70%); will-change: transform;
+}
+#field { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+.win {
+  position: absolute; left: 0; top: 0; display: block; padding: 0; border: 0; background: none; cursor: pointer;
+  width: var(--w); aspect-ratio: 3 / 2; margin: calc(var(--w) / -3) 0 0 calc(var(--w) / -2);
+  color: inherit; font: inherit; outline: none; will-change: transform;
+}
+.win .glow {                                  /* the window's own light, spilling onto the dark */
+  position: absolute; inset: -60% -42%; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(var(--glow), 0.3), rgba(var(--glow), 0.14) 45%, rgba(var(--glow), 0.04) 72%, rgba(var(--glow), 0) 100%);
+  opacity: 0.85; transition: opacity 1.8s var(--ease), transform 1.8s var(--ease);
+}
+.win .frame {
+  position: absolute; inset: 0; border-radius: 10px; overflow: hidden; background: #120e0b;
+  box-shadow: 0 26px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(239, 227, 207, 0.07);
+  transition: box-shadow 1.2s var(--ease);
+}
+.win .frame::after {                          /* a soft inner vignette and a hairline of light on the top edge */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0 44px rgba(13, 10, 8, 0.5), inset 0 1px 0 rgba(255, 244, 225, 0.1);
+}
+.win .art { position: absolute; inset: 0; overflow: hidden; }
+.win .kb { position: absolute; inset: 0; animation: kb var(--kb-dur, 40s) ease-in-out var(--kb-delay, 0s) infinite alternate; will-change: transform; }
+.win .kb svg, .win .kb img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.win .kb img { opacity: 0; transition: opacity 1.4s var(--ease); }
+.win .kb img.ready { opacity: 1; }
+@keyframes kb { from { transform: scale(1.05) translate(-1.2%, 0.6%); } to { transform: scale(1.13) translate(1.4%, -1%); } }
+.win .veil { position: absolute; inset: 0; background: #0d0a08; opacity: 0.2; pointer-events: none; }
+.win .fx { position: absolute; pointer-events: none; mix-blend-mode: screen; }
+.fx-lake {                                    /* a faint shimmer on the water */
+  left: -12%; right: -12%; top: 51%; height: 22%;
+  background: repeating-linear-gradient(to bottom, rgba(255, 244, 225, 0) 0 6px, rgba(255, 244, 225, 0.16) 6px 7px);
+  -webkit-mask-image: radial-gradient(55% 100% at 50% 50%, #000, transparent), repeating-linear-gradient(90deg, #000 0 26px, transparent 26px 34px, #000 34px 47px, transparent 47px 61px);
+  -webkit-mask-composite: source-in;
+          mask-image: radial-gradient(55% 100% at 50% 50%, #000, transparent), repeating-linear-gradient(90deg, #000 0 26px, transparent 26px 34px, #000 34px 47px, transparent 47px 61px);
+          mask-composite: intersect;
+  animation: shimmer 11s ease-in-out infinite alternate;
+}
+@keyframes shimmer { 0% { transform: translateX(-2.5%); opacity: 0.3; } 50% { opacity: 0.75; } 100% { transform: translateX(2.5%); opacity: 0.4; } }
+.fx-rain {                                    /* soft rain streaks */
+  left: 0; right: 0; top: -120px; bottom: 0; opacity: 0.45;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='120'%3E%3Cg stroke='rgba(232,238,240,0.42)' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M12 4l-2 17M53 38l-2 15M80 77l-2 13M31 90l-1.5 11M66 9l-1.5 10M43 64l-1.5 9M7 55l-1.5 11'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 90px 120px;
+  animation: rainfall 3s linear infinite;
+}
+@keyframes rainfall { to { transform: translateY(120px); } }
+.fx-fire {                                    /* the firelight breathes */
+  left: 25%; top: 28%; width: 44%; height: 64%; transform-origin: 50% 70%;
+  background: radial-gradient(closest-side, rgba(255, 176, 96, 0.34), rgba(255, 140, 60, 0.1) 55%, rgba(255, 140, 60, 0) 100%);
+  animation: flicker 4.7s ease-in-out infinite;
+}
+@keyframes flicker {
+  0% { opacity: 0.6; transform: scale(1); } 12% { opacity: 0.85; transform: scale(1.04); } 21% { opacity: 0.56; transform: scale(0.98); }
+  35% { opacity: 0.9; transform: scale(1.03); } 46% { opacity: 0.62; transform: scale(1); } 58% { opacity: 0.95; transform: scale(1.05); }
+  71% { opacity: 0.58; transform: scale(0.99); } 86% { opacity: 0.8; transform: scale(1.02); } 100% { opacity: 0.6; transform: scale(1); }
+}
+.win .wt {
+  position: absolute; left: -25%; right: -25%; top: calc(100% + 12px); text-align: center; line-height: 1.25;
+  font-size: clamp(16px, calc(var(--w) * 0.074), 22px); letter-spacing: 0.12em; color: var(--paper-80);
+  text-shadow: 0 0 14px rgba(13, 10, 8, 0.85); opacity: 0.66;
+  transition: opacity 1.6s var(--ease); pointer-events: none;
+}
+.win .hn { display: block; margin-top: 2px; font-style: italic; font-size: 0.72em; letter-spacing: 0.1em; color: var(--paper-40); }
+.win:hover .wt, .win:focus-visible .wt, .win.lit .wt { opacity: 1; }
+.win:hover .glow, .win:focus-visible .glow, .win.lit .glow { opacity: 1; transform: scale(1.12); }
+.win:hover .frame, .win.lit .frame { box-shadow: 0 30px 70px -18px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(239, 227, 207, 0.14); }
+.win:focus-visible .frame { box-shadow: 0 30px 70px -18px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--gold); }
+.win.unlit { cursor: default; pointer-events: none; }
+.win.unlit .frame { background: radial-gradient(ellipse at 50% 55%, rgba(201, 163, 91, 0.06), rgba(201, 163, 91, 0) 70%); box-shadow: 0 0 0 1px rgba(239, 227, 207, 0.045); }
+.win.unlit .frame::after { display: none; }
+#gallery.still .kb, #gallery.still .fx, #gallery.still .haze { animation: none; }
+#gallery.still .mote { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .win .kb, .win .fx, #gallery .haze { animation: none; }
+  .mote { display: none; }
+}
+</style>
+
+<div id="stage" aria-hidden="false"></div>
+
+<div id="threshold" role="button" tabindex="0" aria-label="halcyon. press and hold for one slow breath, then let go to enter.">
+  <div class="light" id="tlight">
+    <div class="swell"><div class="halo" id="thalo"></div><div class="core" id="tcore"></div></div>
+  </div>
+  <div class="word" aria-hidden="true">halcyon</div>
+</div>
+<div id="loading" aria-hidden="true"></div>
+
+<div id="restlight" aria-hidden="true">
+  <div class="light"><div class="swell"><div class="halo"></div><div class="core"></div></div></div>
+</div>
+
+<div id="gallery" hidden role="group" aria-label="gallery"><div class="haze" aria-hidden="true"></div><div class="haze b" aria-hidden="true"></div><div id="deep" aria-hidden="true"></div><div id="field"></div></div>
+<div id="title" aria-live="polite"></div>
+<div id="holdcue" aria-hidden="true"></div>
+<button type="button" id="timerglass" aria-label="time left on the timer"><svg viewBox="0 0 22 22" aria-hidden="true"><circle class="tr" cx="11" cy="11" r="9"/><circle class="tp" cx="11" cy="11" r="9" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/></svg><span class="tt">0:00</span></button>
+
+<div id="controls">
+  <div id="panel" hidden role="group" aria-label="rest">
+    <span class="lab" id="lab-vol">volume</span>
+    <input id="volume" type="range" min="0" max="1" step="0.01" value="0.7" aria-labelledby="lab-vol">
+    <span class="lab">timer</span>
+    <div class="seg" id="timer" role="group" aria-label="timer">
+      <button type="button" data-min="0" aria-pressed="true">off</button>
+      <button type="button" data-min="5" aria-pressed="false">5</button>
+      <button type="button" data-min="10" aria-pressed="false">10</button>
+      <button type="button" data-min="20" aria-pressed="false">20</button>
+      <button type="button" data-min="40" aria-pressed="false">40</button>
+    </div>
+    <span class="lab">haptics</span>
+    <button type="button" class="sw" id="sw-haptics" aria-pressed="true">on</button>
+    <span class="lab">still</span>
+    <button type="button" class="sw" id="sw-still" aria-pressed="false">off</button>
+    <span class="lab">sounds</span>
+    <button type="button" class="sw" id="b-credits" aria-expanded="false" aria-controls="credits">credits</button>
+    <div id="credits" hidden>
+      piano: upright piano KW by FreePats, CC0.<br>
+      rain on grass: "Rain" by alex36917, freesound 524605, CC BY.<br>
+      sea: "Waves" by Luftrum, freesound 48412, CC BY.<br>
+      other recordings: Falcet, kvgarlic, Lisa Redfern, jmbphilmes, ezwa, felix.blume, jorge0000. CC0 or public domain, through the Blanket and Ambie projects.
+    </div>
+  </div>
+
+  <div id="arc" hidden>
+    <svg id="arcsvg" viewBox="0 0 520 112" role="slider" tabindex="0" aria-label="hour" aria-valuemin="0" aria-valuemax="100" aria-valuenow="58" aria-valuetext="golden hour">
+      <path class="hit" id="archit" d=""></path>
+      <path class="track" id="arctrack" d=""></path>
+      <circle class="end" cx="20" cy="104" r="3.5"></circle>
+      <path class="end" d="M503 99.5a5 5 0 1 0 0 9a4 4 0 0 1 0 -9z"></path>
+      <circle class="dotglow" id="arcglow" r="13" cx="0" cy="0"></circle>
+      <circle class="dot" id="arcdot" r="5" cx="0" cy="0"></circle>
+    </svg>
+  </div>
+
+  <div class="icons">
+    <button type="button" class="icon" id="b-back" aria-label="back">
+      <svg viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="20" rx="3"></rect><path d="M19 16H12M15 13l-3 3 3 3"></path></svg>
+    </button>
+    <button type="button" class="icon" id="b-hour" aria-label="hour" aria-expanded="false" aria-controls="arc">
+      <svg viewBox="0 0 32 32"><path d="M5 22a11 11 0 0 1 22 0"></path><circle cx="21" cy="13.5" r="2" fill="currentColor"></circle><path d="M3 25h26"></path></svg>
+    </button>
+    <button type="button" class="icon" id="b-rest" aria-label="rest" aria-expanded="false" aria-controls="panel">
+      <svg viewBox="0 0 32 32"><path d="M20 6a10 10 0 1 0 6 16A8 8 0 0 1 20 6z"></path></svg>
+    </button>
+  </div>
+</div>
+
